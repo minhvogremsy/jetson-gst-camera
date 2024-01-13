@@ -169,90 +169,97 @@ bool gstCamera::buildLaunchStr()
 	}
 	else
 	{
-		ss << "v4l2src device=" << mOptions.resource.location << " do-timestamp=true ! ";
+	// 	ss << "v4l2src device=" << mOptions.resource.location << " do-timestamp=true ! ";
 		
-		if( mOptions.codec != videoOptions::CODEC_UNKNOWN )
-		{
-			ss << gst_codec_to_string(mOptions.codec) << ", ";
+	// 	if( mOptions.codec != videoOptions::CODEC_UNKNOWN )
+	// 	{
+	// 		ss << gst_codec_to_string(mOptions.codec) << ", ";
 			
-			if( mOptions.codec == videoOptions::CODEC_RAW )
-				ss << "format=(string)" << gst_format_to_string(mFormatYUV) << ", ";
+	// 		if( mOptions.codec == videoOptions::CODEC_RAW )
+	// 			ss << "format=(string)" << gst_format_to_string(mFormatYUV) << ", ";
 			
-			ss << "width=(int)" << GetWidth() << ", height=(int)" << GetHeight() << ", framerate=" << (int)mOptions.frameRate << "/1 ! "; 
-		}
+	// 		ss << "width=(int)" << GetWidth() << ", height=(int)" << GetHeight() << ", framerate=" << (int)mOptions.frameRate << "/1 ! "; 
+	// 	}
 		
-		//ss << "queue max-size-buffers=16 ! ";
+	// 	//ss << "queue max-size-buffers=16 ! ";
 
-		if( mOptions.save.path.length() > 0 )
-		{
-			ss << "tee name=savetee savetee. ! queue ! ";
+	// 	if( mOptions.save.path.length() > 0 )
+	// 	{
+	// 		ss << "tee name=savetee savetee. ! queue ! ";
 			
-			if( !gst_build_filesink(mOptions.save, mOptions.codec, ss) )
-				return false;
+	// 		if( !gst_build_filesink(mOptions.save, mOptions.codec, ss) )
+	// 			return false;
 
-			ss << "savetee. ! queue ! ";
-		}
+	// 		ss << "savetee. ! queue ! ";
+	// 	}
 	
-		// select the decoder
-		const char* decoder = gst_select_decoder(mOptions.codec, mOptions.codecType);
+	// 	// select the decoder
+	// 	const char* decoder = gst_select_decoder(mOptions.codec, mOptions.codecType);
 		
-		if( !decoder && mOptions.codec != videoOptions::CODEC_RAW )
-		{
-			LogError(LOG_GSTREAMER "gstCamera -- unsupported codec requested (%s)\n", videoOptions::CodecToStr(mOptions.codec));
-			LogError(LOG_GSTREAMER "             supported decoder codecs are:\n");
-			LogError(LOG_GSTREAMER "                * h264\n");
-			LogError(LOG_GSTREAMER "                * h265\n");
-			LogError(LOG_GSTREAMER "                * vp8\n");
-			LogError(LOG_GSTREAMER "                * vp9\n");
-			LogError(LOG_GSTREAMER "                * mpeg2\n");
-			LogError(LOG_GSTREAMER "                * mpeg4\n");
-			LogError(LOG_GSTREAMER "                * mjpeg\n");
+	// 	if( !decoder && mOptions.codec != videoOptions::CODEC_RAW )
+	// 	{
+	// 		LogError(LOG_GSTREAMER "gstCamera -- unsupported codec requested (%s)\n", videoOptions::CodecToStr(mOptions.codec));
+	// 		LogError(LOG_GSTREAMER "             supported decoder codecs are:\n");
+	// 		LogError(LOG_GSTREAMER "                * h264\n");
+	// 		LogError(LOG_GSTREAMER "                * h265\n");
+	// 		LogError(LOG_GSTREAMER "                * vp8\n");
+	// 		LogError(LOG_GSTREAMER "                * vp9\n");
+	// 		LogError(LOG_GSTREAMER "                * mpeg2\n");
+	// 		LogError(LOG_GSTREAMER "                * mpeg4\n");
+	// 		LogError(LOG_GSTREAMER "                * mjpeg\n");
 			
-			return false;
-		}
+	// 		return false;
+	// 	}
 
-		if( mOptions.codec != videoOptions::CODEC_RAW )
-		{
-			if( mOptions.codecType != videoOptions::CODEC_V4L2 )
-			{
-				if( mOptions.codec == videoOptions::CODEC_H264 )
-					ss << "h264parse ! ";  
-				else if( mOptions.codec == videoOptions::CODEC_H265 )
-					ss << "h265parse ! ";
-				else if( mOptions.codec == videoOptions::CODEC_MPEG2 )
-					ss << "mpegvideoparse ! ";
-				else if( mOptions.codec == videoOptions::CODEC_MPEG4 )
-					ss << "mpeg4videoparse ! ";
-			}
+	// 	if( mOptions.codec != videoOptions::CODEC_RAW )
+	// 	{
+	// 		if( mOptions.codecType != videoOptions::CODEC_V4L2 )
+	// 		{
+	// 			if( mOptions.codec == videoOptions::CODEC_H264 )
+	// 				ss << "h264parse ! ";  
+	// 			else if( mOptions.codec == videoOptions::CODEC_H265 )
+	// 				ss << "h265parse ! ";
+	// 			else if( mOptions.codec == videoOptions::CODEC_MPEG2 )
+	// 				ss << "mpegvideoparse ! ";
+	// 			else if( mOptions.codec == videoOptions::CODEC_MPEG4 )
+	// 				ss << "mpeg4videoparse ! ";
+	// 		}
 
-			ss << decoder << " name=decoder ";  //ss << "nvjpegdec ! video/x-raw ! "; //ss << "jpegparse ! nvv4l2decoder mjpeg=1 ! video/x-raw(memory:NVMM) ! nvvidconv ! video/x-raw ! "; //
+	// 		ss << decoder << " name=decoder ";  //ss << "nvjpegdec ! video/x-raw ! "; //ss << "jpegparse ! nvv4l2decoder mjpeg=1 ! video/x-raw(memory:NVMM) ! nvvidconv ! video/x-raw ! "; //
 	
-			if( mOptions.codecType == videoOptions::CODEC_V4L2 && mOptions.codec != videoOptions::CODEC_MJPEG )
-				ss << "enable-max-performance=1 ";
+	// 		if( mOptions.codecType == videoOptions::CODEC_V4L2 && mOptions.codec != videoOptions::CODEC_MJPEG )
+	// 			ss << "enable-max-performance=1 ";
 			
-			ss << "! ";
+	// 		ss << "! ";
 	
-			if( (enable_nvmm && mOptions.codecType != videoOptions::CODEC_CPU) || mOptions.codecType == videoOptions::CODEC_V4L2 )
-				ss << "video/x-raw(memory:NVMM) ! ";  // V4L2 codecs can only output NVMM
-			else
-				ss << "video/x-raw ! ";
-		}
+	// 		if( (enable_nvmm && mOptions.codecType != videoOptions::CODEC_CPU) || mOptions.codecType == videoOptions::CODEC_V4L2 )
+	// 			ss << "video/x-raw(memory:NVMM) ! ";  // V4L2 codecs can only output NVMM
+	// 		else
+	// 			ss << "video/x-raw ! ";
+	// 	}
 
-	#if defined(__aarch64__)
-		// video flipping/rotating for V4L2 devices (use nvvidconv if a hw codec is used for decode)
-		// V4L2 decoders can only output NVMM memory, if we aren't using NVMM have nvvidconv convert it 
-		if( mOptions.flipMethod != videoOptions::FLIP_NONE || (mOptions.codecType == videoOptions::CODEC_V4L2 && !enable_nvmm) )
-		{
-			if( (enable_nvmm && mOptions.codecType != videoOptions::CODEC_CPU) || mOptions.codecType == videoOptions::CODEC_V4L2 )
-				ss << "nvvidconv flip-method=" << mOptions.flipMethod << " ! " << (enable_nvmm ? "video/x-raw(memory:NVMM) ! " : "video/x-raw ! ");
-			else
-				ss << "videoflip method=" << videoOptions::FlipMethodToStr(mOptions.flipMethod) << " ! ";  // the videoflip enum varies slightly, but the strings are the same
-		}
-	#elif defined(__x86_64__) || defined(__amd64__)
-		if( mOptions.flipMethod != videoOptions::FLIP_NONE )
-			ss << "videoflip method=" << videoOptions::FlipMethodToStr(mOptions.flipMethod) << " ! ";
-	#endif
-		ss << "appsink name=mysink sync=false";
+	// #if defined(__aarch64__)
+	// 	// video flipping/rotating for V4L2 devices (use nvvidconv if a hw codec is used for decode)
+	// 	// V4L2 decoders can only output NVMM memory, if we aren't using NVMM have nvvidconv convert it 
+	// 	if( mOptions.flipMethod != videoOptions::FLIP_NONE || (mOptions.codecType == videoOptions::CODEC_V4L2 && !enable_nvmm) )
+	// 	{
+	// 		if( (enable_nvmm && mOptions.codecType != videoOptions::CODEC_CPU) || mOptions.codecType == videoOptions::CODEC_V4L2 )
+	// 			ss << "nvvidconv flip-method=" << mOptions.flipMethod << " ! " << (enable_nvmm ? "video/x-raw(memory:NVMM) ! " : "video/x-raw ! ");
+	// 		else
+	// 			ss << "videoflip method=" << videoOptions::FlipMethodToStr(mOptions.flipMethod) << " ! ";  // the videoflip enum varies slightly, but the strings are the same
+	// 	}
+	// #elif defined(__x86_64__) || defined(__amd64__)
+	// 	if( mOptions.flipMethod != videoOptions::FLIP_NONE )
+	// 		ss << "videoflip method=" << videoOptions::FlipMethodToStr(mOptions.flipMethod) << " ! ";
+	// #endif
+	// 	ss << "appsink name=mysink sync=false";
+
+		ss << "nvv4l2camerasrc device=/dev/video0 ";
+		ss << "! video/x-raw(memory:NVMM),width=3840,height=2160,format=UYVY,framerate=30/1 ";
+		ss << "! nvvidconv flip-method=2 interpolation-method=4 ";
+		ss << "! video/x-raw(memory:NVMM),width=1920,height=1080,format=NV12 ";
+		ss << "! appsink name=mysink sync=false";
+
 	}
 	
 	mLaunchStr = ss.str();

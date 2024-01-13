@@ -48,7 +48,7 @@ std::string getHostname();
  *
  * @ingroup network
  */
-std::string getHostByName( const char* name, uint32_t retries=10 );
+std::string getHostByName( const char* name, uint32_t retries=5 );
 
 
 /**
